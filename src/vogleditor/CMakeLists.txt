@@ -15,7 +15,7 @@ include_directories(
     ${SRC_DIR}
     ${SRC_DIR}/voglcore
     ${SRC_DIR}/voglcommon
-    ${SRC_DIR}/voglinc
+    ${CMAKE_BINARY_DIR}/voglinc
     ${SRC_DIR}/extlib/loki/include/loki
     ${SRC_DIR}/libtelemetry
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -53,6 +53,9 @@ set(SRC_LIST
     vogleditor_qtextureexplorer.cpp
     vogleditor_qtextureviewer.cpp
     vogleditor_qtimelineview.cpp
+    vogleditor_qtrimdialog.cpp
+    vogleditor_output.cpp
+    vogleditor_settings.cpp
     vogleditor_statetreearbprogramitem.cpp
     vogleditor_statetreearbprogramenvitem.cpp
     vogleditor_statetreebufferitem.cpp
@@ -91,6 +94,7 @@ set(UI_HEADER_LIST
     vogleditor_qtextureviewer.h
     vogleditor_qtextureexplorer.h
     vogleditor_qtimelineview.h
+    vogleditor_qtrimdialog.h
    )
 
 # these are for non-QOBJECT headers
@@ -101,6 +105,8 @@ set(HEADER_LIST
     vogleditor_apicalltreeitem.h
     vogleditor_frameitem.h
     vogleditor_gl_state_snapshot.h
+    vogleditor_output.h
+    vogleditor_settings.h
     vogleditor_snapshotitem.h
     vogleditor_statetreearbprogramitem.h
     vogleditor_statetreearbprogramenvitem.h
@@ -134,6 +140,7 @@ set(FORM_LIST
     vogleditor_qprogramexplorer.ui
     vogleditor_qshaderexplorer.ui
     vogleditor_qtextureexplorer.ui
+    vogleditor_qtrimdialog.ui
    )
 
 set(RESOURCE_LIST
@@ -150,6 +157,8 @@ add_executable(${PROJECT_NAME} ${SRC_LIST} ${HEADER_LIST}
         ${QT_GEN_FORM_HEADER_LIST}
         ${QT_GEN_RESOURCE_RCC_LIST}
    )
+
+add_dependencies(${PROJECT_NAME} voglgen_make_inc)
 
 target_link_libraries(${PROJECT_NAME}
 	${QT_QTMAIN_LIBRARY} 

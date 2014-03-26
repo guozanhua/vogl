@@ -51,6 +51,7 @@ class vogleditor_QTextureExplorer;
 
 class QItemSelection;
 class QModelIndex;
+class QProcess;
 class QSortFilterProxyModel;
 class QToolButton;
 class vogl_context_snapshot;
@@ -67,6 +68,7 @@ class vogleditor_apiCallTimelineModel;
 class vogleditor_apiCallTreeItem;
 class vogleditor_gl_state_snapshot;
 class vogleditor_QApiCallTreeModel;
+class vogleditor_QStateTreeModel;
 
 class VoglEditor : public QMainWindow
 {
@@ -85,14 +87,14 @@ private slots:
    void on_actionE_xit_triggered();
    void on_actionExport_API_Calls_triggered();
 
-   void on_treeView_currentChanged(const QModelIndex & current, const QModelIndex & previous);
+   void slot_treeView_currentChanged(const QModelIndex & current, const QModelIndex & previous);
 
    void on_treeView_clicked(const QModelIndex& index);
 
    void playCurrentTraceFile();
-   void pauseCurrentTraceFile();
    void trimCurrentTraceFile();
-   void stopCurrentTraceFile();
+
+   bool trim_trace_file(QString filename, uint maxFrameIndex, uint maxAllowedTrimLen);
 
    void on_stateTreeView_clicked(const QModelIndex &index);
 
@@ -104,13 +106,16 @@ private slots:
    void on_prevDrawcallButton_clicked();
    void on_nextDrawcallButton_clicked();
 
-   void on_program_edited(vogl_program_state* pNewProgramState);   
+   void slot_program_edited(vogl_program_state* pNewProgramState);
 
    void on_actionSave_Session_triggered();
 
    void on_actionOpen_Session_triggered();
 
    void on_searchTextBox_returnPressed();
+
+   void slot_readReplayStandardOutput();
+   void slot_readReplayStandardError();
 
 private:
    Ui::VoglEditor* ui;
@@ -144,21 +149,25 @@ private:
    bool save_snapshot_to_disk(vogl_gl_state_snapshot* pSnapshot, dynamic_string filename, vogl_blob_manager *pBlob_manager);
 
    QString m_openFilename;
-   QLabel* m_statusLabel;
-   vogleditor_QFramebufferExplorer* m_framebufferExplorer;
-   vogleditor_QTextureExplorer* m_textureExplorer;
-   vogleditor_QTextureExplorer* m_renderbufferExplorer;
-   vogleditor_QProgramExplorer* m_programExplorer;
-   vogleditor_QShaderExplorer* m_shaderExplorer;
+   vogleditor_QFramebufferExplorer* m_pFramebufferExplorer;
+   vogleditor_QTextureExplorer* m_pTextureExplorer;
+   vogleditor_QTextureExplorer* m_pRenderbufferExplorer;
+   vogleditor_QProgramExplorer* m_pProgramExplorer;
+   vogleditor_QShaderExplorer* m_pShaderExplorer;
    vogleditor_QTimelineView* m_timeline;
+
+   QGridLayout* m_pFramebufferTab_layout;
+   QGridLayout* m_pTextureTab_layout;
+   QGridLayout* m_pRenderbufferTab_layout;
+   QGridLayout* m_pProgramTab_layout;
+   QGridLayout* m_pShaderTab_layout;
 
    vogleditor_gl_state_snapshot* m_currentSnapshot;
    vogleditor_apiCallTreeItem* m_pCurrentCallTreeItem;
 
+   QProcess* m_pVoglReplayProcess;
    QToolButton* m_pPlayButton;
-   QToolButton* m_pPauseButton;
    QToolButton* m_pTrimButton;
-   QToolButton* m_pStopButton;
 
    vogleditor_traceReplayer m_traceReplayer;
    vogl_trace_file_reader* m_pTraceReader;
@@ -166,8 +175,9 @@ private:
    vogl::hash_map<vogl::uint32, vogl::json_node*> m_backtraceToJsonMap;
 
    vogleditor_apiCallTimelineModel* m_pTimelineModel;
+   vogleditor_QApiCallTreeModel* m_pApiCallTreeModel;
+   vogleditor_QStateTreeModel* m_pStateTreeModel;
 
-   vogleditor_QApiCallTreeModel* m_pApicallTreeModel;
    QColor m_searchTextboxBackgroundColor;
 };
 

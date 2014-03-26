@@ -1500,6 +1500,32 @@ void vogl_gl_replayer::debug_callback_arb(GLenum source, GLenum type, GLuint id,
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+// vogl_replayer::debug_callback
+//----------------------------------------------------------------------------------------------------------------------
+void vogl_gl_replayer::debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, GLvoid *pUser_param)
+{
+    VOGL_FUNC_TRACER
+
+    VOGL_NOTE_UNUSED(length);
+
+    char final_message[4096];
+
+    context_state *pContext_state = (context_state *)(pUser_param);
+
+    vogl_format_debug_output_arb(final_message, sizeof(final_message), source, type, id, severity, reinterpret_cast<const char *>(message));
+
+    if (pContext_state)
+    {
+        vogl_warning_printf("%s: Trace context: 0x%" PRIX64 ", Replay context 0x%" PRIX64 ", Last trace call counter: %" PRIu64 "\n%s\n", VOGL_FUNCTION_NAME,
+                           cast_val_to_uint64(pContext_state->m_trace_context), cast_val_to_uint64(pContext_state->m_replay_context), cast_val_to_uint64(pContext_state->m_last_call_counter), final_message);
+    }
+    else
+    {
+        vogl_warning_printf("%s: %s\n", VOGL_FUNCTION_NAME, final_message);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 // vogl_replayer::is_extension_supported
 //----------------------------------------------------------------------------------------------------------------------
 bool vogl_gl_replayer::is_extension_supported(const char *pExt)
@@ -3991,7 +4017,7 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
         if (!vogl_display_list_state::is_call_listable(entrypoint_id, trace_packet))
         {
             if (!g_vogl_entrypoint_descs[entrypoint_id].m_whitelisted_for_displaylists)
-                process_entrypoint_error("%s: Failed serializing trace packet into display list shadow! Call is not listable.\n", VOGL_FUNCTION_NAME);
+                process_entrypoint_error("%s: Failed serializing trace packet into display list shadow! Call is not whitelisted for display list usage by vogl.\n", VOGL_FUNCTION_NAME);
             else
                 process_entrypoint_warning("%s: Failed serializing trace packet into display list shadow! Call with these parameters is not listable.\n", VOGL_FUNCTION_NAME);
         }
@@ -7461,51 +7487,6 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
 
             break;
         }
-        case VOGL_ENTRYPOINT_glReadPixels:
-        {
-// TODO: This is causing huge stalls when replaying metro, not sure why. Also, the # of traced bytes is zero in metro.
-#if 0
-		if (!benchmark_mode())
-		{
-            GLint x = trace_packet.get_param_value<GLint>(0);
-            GLint y = trace_packet.get_param_value<GLint>(1);
-            GLsizei width = trace_packet.get_param_value<GLsizei>(2);
-            GLsizei height = trace_packet.get_param_value<GLsizei>(3);
-            GLenum format = trace_packet.get_param_value<GLenum>(4);
-            GLenum type = trace_packet.get_param_value<GLenum>(5);
-            const GLvoid *trace_data = trace_packet.get_param_client_memory<const GLvoid>(6);
-            uint trace_data_size = trace_packet.get_param_client_memory_data_size(6);
-
-			size_t replay_data_size = vogl_get_image_size(format, type, width, height, 1);
-			if (replay_data_size != trace_data_size)
-			{
-				process_entrypoint_warning("%s: Unexpected trace data size, got %u expected %" PRIu64 "\n", VOGL_METHOD_NAME, trace_data_size, (uint64_t)replay_data_size);
-			}
-			else if (!trace_data)
-			{
-				process_entrypoint_warning("%s: Trace data is missing from packet\n", VOGL_METHOD_NAME);
-			}
-
-			if (replay_data_size > cUINT32_MAX)
-			{
-				process_entrypoint_error("%s: Replay data size is too large (%" PRIu64 ")!\n", VOGL_METHOD_NAME, (uint64_t)replay_data_size);
-				return cStatusHardFailure;
-			}
-
-			vogl::vector<uint8> data(static_cast<uint>(replay_data_size));
-			GL_ENTRYPOINT(glReadPixels)(x, y, width, height, format, type, data.get_ptr());
-
-			if ((trace_data_size == replay_data_size) && (trace_data_size) && (trace_data))
-			{
-				if (memcmp(data.get_ptr(), trace_data, trace_data_size) != 0)
-				{
-					process_entrypoint_error("%s: Replay's returned pixel data differed from trace's!\n", VOGL_METHOD_NAME);
-				}
-			}
-		}
-#endif
-            break;
-        }
         case VOGL_ENTRYPOINT_glGetTexLevelParameterfv:
         {
             if (!benchmark_mode())
@@ -8449,14 +8430,6 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
             // TODO - we need to hook up this extension to the tracer
             break;
         }
-        case VOGL_ENTRYPOINT_glDebugMessageCallbackARB:
-        case VOGL_ENTRYPOINT_glGetDebugMessageLogARB:
-        case VOGL_ENTRYPOINT_glDebugMessageControlARB:
-        case VOGL_ENTRYPOINT_glDebugMessageInsertARB:
-        {
-            // TODO
-            break;
-        }
         case VOGL_ENTRYPOINT_glBitmap:
         {
             VOGL_REPLAY_LOAD_PARAMS_HELPER_glBitmap;
@@ -8723,6 +8696,243 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
 
             break;
         }
+        case VOGL_ENTRYPOINT_glDebugMessageInsert:
+        {
+            VOGL_REPLAY_LOAD_PARAMS_HELPER_glDebugMessageInsert;
+
+            VOGL_REPLAY_CALL_GL_HELPER_glDebugMessageInsert;
+            break;
+        }
+        case VOGL_ENTRYPOINT_glDebugMessageInsertARB:
+        {
+            VOGL_REPLAY_LOAD_PARAMS_HELPER_glDebugMessageInsertARB;
+
+            VOGL_REPLAY_CALL_GL_HELPER_glDebugMessageInsertARB;
+            break;
+        }
+        case VOGL_ENTRYPOINT_glDebugMessageCallbackARB:
+        {
+            GL_ENTRYPOINT(glDebugMessageCallbackARB)(debug_callback_arb, (GLvoid *)m_pCur_context_state);
+
+            break;
+        }
+        case VOGL_ENTRYPOINT_glDebugMessageCallback:
+        {
+            GL_ENTRYPOINT(glDebugMessageCallback)(debug_callback, (GLvoid *)m_pCur_context_state);
+
+            break;
+        }
+        case VOGL_ENTRYPOINT_glObjectLabel:
+        {
+            VOGL_REPLAY_LOAD_PARAMS_HELPER_glObjectLabel;
+
+            switch (identifier)
+            {
+                case GL_BUFFER:
+                {
+                    name = map_handle(get_shared_state()->m_buffers, name);
+                    break;
+                }
+                case GL_SHADER:
+                case GL_PROGRAM:
+                {
+                    name = map_handle(get_shared_state()->m_shadow_state.m_objs, name);
+                    break;
+                }
+                case GL_VERTEX_ARRAY:
+                {
+                    name = map_handle(get_shared_state()->m_vertex_array_objects, name);
+                    break;
+                }
+                case GL_QUERY:
+                {
+                    name = map_handle(get_shared_state()->m_queries, name);
+                    break;
+                }
+                case GL_SAMPLER:
+                {
+                    name = map_handle(get_shared_state()->m_sampler_objects, name);
+                    break;
+                }
+                case GL_TEXTURE:
+                {
+                    name = map_handle(get_shared_state()->m_shadow_state.m_textures, name);
+                    break;
+                }
+                case GL_RENDERBUFFER:
+                {
+                    name = map_handle(get_shared_state()->m_shadow_state.m_rbos, name);
+                    break;
+                }
+                case GL_FRAMEBUFFER:
+                {
+                    name = map_handle(get_shared_state()->m_framebuffers, name);
+                    break;
+                }
+                case GL_DISPLAY_LIST:
+                {
+                    name = map_handle(get_shared_state()->m_lists, name);
+                    break;
+                }
+                case GL_TRANSFORM_FEEDBACK: // TODO: Investigate this more
+                case GL_PROGRAM_PIPELINE: // TODO: We don't support program pipelines yet
+                default:
+                {
+                    process_entrypoint_error("%s: Unsupported object identifier 0x%X\n", VOGL_METHOD_NAME, identifier);
+                    return cStatusSoftFailure;
+                }
+            }
+
+            VOGL_REPLAY_CALL_GL_HELPER_glObjectLabel;
+
+            break;
+        }
+        case VOGL_ENTRYPOINT_glObjectPtrLabel:
+        {
+            vogl_sync_ptr_value trace_sync = trace_packet.get_param_ptr_value(0);
+            GLsizei length = trace_packet.get_param_value<GLsizei>(1);
+            const GLchar *pTrace_label = reinterpret_cast<const GLchar *>(trace_packet.get_param_client_memory_ptr(2));
+            GLsync replay_sync = NULL;
+
+            if (trace_sync)
+            {
+                gl_sync_hash_map::const_iterator it = get_shared_state()->m_syncs.find(trace_sync);
+                if (it == get_shared_state()->m_syncs.end())
+                {
+                    process_entrypoint_error("%s: Failed remapping trace sync value 0x%" PRIx64 "\n", VOGL_METHOD_NAME, static_cast<uint64_t>(trace_sync));
+                    return cStatusSoftFailure;
+                }
+                else
+                {
+                    replay_sync = it->second;
+                }
+            }
+
+            GL_ENTRYPOINT(glObjectPtrLabel)(replay_sync, length, pTrace_label);
+
+            break;
+        }
+        case VOGL_ENTRYPOINT_glReadPixels:
+        {
+            GLint x = trace_packet.get_param_value<GLint>(0);
+            GLint y = trace_packet.get_param_value<GLint>(1);
+            GLsizei width = trace_packet.get_param_value<GLsizei>(2);
+            GLsizei height = trace_packet.get_param_value<GLsizei>(3);
+            GLenum format = trace_packet.get_param_value<GLenum>(4);
+            GLenum type = trace_packet.get_param_value<GLenum>(5);
+
+            GLuint pixel_pack_buf = vogl_get_bound_gl_buffer(GL_PIXEL_PACK_BUFFER);
+            if (pixel_pack_buf)
+            {
+                GL_ENTRYPOINT(glReadPixels)(x, y, width, height, format, type, reinterpret_cast<GLvoid *>(trace_packet.get_param_ptr_value(6)));
+            }
+            else
+            {
+                const GLvoid *trace_data = trace_packet.get_param_client_memory<const GLvoid>(6);
+                uint trace_data_size = trace_packet.get_param_client_memory_data_size(6);
+
+                size_t replay_data_size = vogl_get_image_size(format, type, width, height, 1);
+                if (replay_data_size != trace_data_size)
+                {
+                    process_entrypoint_warning("%s: Unexpected trace data size, got %u expected %" PRIu64 "\n", VOGL_METHOD_NAME, trace_data_size, (uint64_t)replay_data_size);
+                }
+                else if (!trace_data)
+                {
+                    process_entrypoint_warning("%s: Trace data is missing from packet\n", VOGL_METHOD_NAME);
+                }
+
+                if (replay_data_size > cUINT32_MAX)
+                {
+                    process_entrypoint_error("%s: Replay data size is too large (%" PRIu64 ")!\n", VOGL_METHOD_NAME, (uint64_t)replay_data_size);
+                    return cStatusHardFailure;
+                }
+
+                vogl::vector<uint8> data(static_cast<uint>(replay_data_size));
+                GL_ENTRYPOINT(glReadPixels)(x, y, width, height, format, type, data.get_ptr());
+
+                if ((trace_data_size == replay_data_size) && (trace_data_size) && (trace_data))
+                {
+                    if (memcmp(data.get_ptr(), trace_data, trace_data_size) != 0)
+                    {
+                        process_entrypoint_error("%s: Replay's returned pixel data differed from trace's!\n", VOGL_METHOD_NAME);
+                    }
+                }
+                else
+                {
+                    process_entrypoint_warning("%s: Replay's computed glReadPixels image size differs from traces (%u vs %u)!\n", VOGL_METHOD_NAME, static_cast<uint>(trace_data_size), static_cast<uint>(replay_data_size));
+                }
+            }
+
+            break;
+        }
+        case VOGL_ENTRYPOINT_glGetTexImage:
+        {
+            VOGL_REPLAY_LOAD_PARAMS_HELPER_glGetTexImage;
+
+            GLuint pixel_pack_buf = vogl_get_bound_gl_buffer(GL_PIXEL_PACK_BUFFER);
+            if (pixel_pack_buf)
+            {
+                GLvoid *pReplay_pixels = reinterpret_cast<GLvoid *>(trace_packet.get_param_ptr_value(4));
+
+                VOGL_REPLAY_CALL_GL_HELPER_glGetTexImage;
+            }
+            else
+            {
+                uint trace_data_size = trace_packet.get_param_client_memory_data_size(4);
+
+                size_t replay_data_size = vogl_get_tex_target_image_size(target, level, format, type);
+
+                if (replay_data_size > cUINT32_MAX)
+                {
+                    process_entrypoint_error("%s: Replay data size is too large (%" PRIu64 ")!\n", VOGL_METHOD_NAME, (uint64_t)replay_data_size);
+                    return cStatusHardFailure;
+                }
+
+                uint8_vec data(static_cast<uint>(replay_data_size));
+
+                GLvoid *pReplay_pixels = data.get_ptr();
+
+                VOGL_REPLAY_CALL_GL_HELPER_glGetTexImage;
+
+                if ((trace_data_size == replay_data_size) && (trace_data_size) && (pTrace_pixels))
+                {
+                    if (memcmp(data.get_ptr(), pTrace_pixels, trace_data_size) != 0)
+                    {
+                        process_entrypoint_error("%s: Replay's returned pixel data differed from trace's!\n", VOGL_METHOD_NAME);
+                    }
+                }
+                else
+                {
+                    process_entrypoint_warning("%s: Replay's computed glGetTexImage() image size differs from traces (%u vs %u)!\n", VOGL_METHOD_NAME, static_cast<uint>(trace_data_size), static_cast<uint>(replay_data_size));
+                }
+            }
+
+            break;
+        }
+        case VOGL_ENTRYPOINT_glGetCompressedTexImage:
+        {
+            VOGL_REPLAY_LOAD_PARAMS_HELPER_glGetCompressedTexImage
+
+            VOGL_NOTE_UNUSED(pTrace_img);
+
+            GLuint pixel_pack_buf = vogl_get_bound_gl_buffer(GL_PIXEL_PACK_BUFFER);
+            if (pixel_pack_buf)
+            {
+                GLvoid *pReplay_img = reinterpret_cast<GLvoid *>(trace_packet.get_param_ptr_value(2));
+
+                VOGL_REPLAY_CALL_GL_HELPER_glGetCompressedTexImage;
+            }
+            else
+            {
+                // TODO: Implement non-pixel pack buffer path, compare for divergence
+            }
+
+            break;
+        }
+        case VOGL_ENTRYPOINT_glGetDebugMessageLogARB:
+        case VOGL_ENTRYPOINT_glGetObjectLabel:
+        case VOGL_ENTRYPOINT_glGetObjectPtrLabel:
+        case VOGL_ENTRYPOINT_glGetDebugMessageLog:
         case VOGL_ENTRYPOINT_glAreTexturesResident:
         case VOGL_ENTRYPOINT_glAreTexturesResidentEXT:
         case VOGL_ENTRYPOINT_glGetActiveAtomicCounterBufferiv:
@@ -8764,7 +8974,6 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
         case VOGL_ENTRYPOINT_glGetCombinerOutputParameterivNV:
         case VOGL_ENTRYPOINT_glGetCombinerStageParameterfvNV:
         case VOGL_ENTRYPOINT_glGetCompressedMultiTexImageEXT:
-        case VOGL_ENTRYPOINT_glGetCompressedTexImage:
         case VOGL_ENTRYPOINT_glGetCompressedTexImageARB:
         case VOGL_ENTRYPOINT_glGetCompressedTextureImageEXT:
         case VOGL_ENTRYPOINT_glGetConvolutionFilter:
@@ -8774,7 +8983,6 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
         case VOGL_ENTRYPOINT_glGetConvolutionParameteriv:
         case VOGL_ENTRYPOINT_glGetConvolutionParameterivEXT:
         case VOGL_ENTRYPOINT_glGetConvolutionParameterxvOES:
-        case VOGL_ENTRYPOINT_glGetDebugMessageLog:
         case VOGL_ENTRYPOINT_glGetDebugMessageLogAMD:
         case VOGL_ENTRYPOINT_glGetDetailTexFuncSGIS:
         case VOGL_ENTRYPOINT_glGetDoubleIndexedvEXT:
@@ -8876,10 +9084,8 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
         case VOGL_ENTRYPOINT_glGetNamedStringivARB:
         case VOGL_ENTRYPOINT_glGetObjectBufferfvATI:
         case VOGL_ENTRYPOINT_glGetObjectBufferivATI:
-        case VOGL_ENTRYPOINT_glGetObjectLabel:
         case VOGL_ENTRYPOINT_glGetObjectParameterfvARB:
         case VOGL_ENTRYPOINT_glGetObjectParameterivAPPLE:
-        case VOGL_ENTRYPOINT_glGetObjectPtrLabel:
         case VOGL_ENTRYPOINT_glGetOcclusionQueryivNV:
         case VOGL_ENTRYPOINT_glGetOcclusionQueryuivNV:
         case VOGL_ENTRYPOINT_glGetPathColorGenfvNV:
@@ -8961,7 +9167,6 @@ vogl_gl_replayer::status_t vogl_gl_replayer::process_gl_entrypoint_packet_intern
         case VOGL_ENTRYPOINT_glGetTexEnvxvOES:
         case VOGL_ENTRYPOINT_glGetTexFilterFuncSGIS:
         case VOGL_ENTRYPOINT_glGetTexGenxvOES:
-        case VOGL_ENTRYPOINT_glGetTexImage:
         case VOGL_ENTRYPOINT_glGetTexLevelParameterxvOES:
         case VOGL_ENTRYPOINT_glGetTexParameterIivEXT:
         case VOGL_ENTRYPOINT_glGetTexParameterIuivEXT:
@@ -10241,6 +10446,8 @@ void vogl_gl_replayer::trace_to_replay_handle_remapper::delete_handle_and_object
 
 //----------------------------------------------------------------------------------------------------------------------
 // vogl_replayer::trace_to_replay_handle_remapper::declare_location
+// from_location - trace location
+// to_location - replay/GL location
 //----------------------------------------------------------------------------------------------------------------------
 void vogl_gl_replayer::trace_to_replay_handle_remapper::declare_location(uint32 from_program_handle, uint32 to_program_handle, int32 from_location, int32 to_location)
 {

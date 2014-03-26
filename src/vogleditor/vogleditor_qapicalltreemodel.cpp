@@ -34,7 +34,7 @@
 vogleditor_QApiCallTreeModel::vogleditor_QApiCallTreeModel(vogl_trace_file_reader* reader, QObject *parent)
     : QAbstractItemModel(parent)
 {
-    m_rootItem = new vogleditor_apiCallTreeItem(this);
+    m_rootItem = vogl_new(vogleditor_apiCallTreeItem, this);
     setupModelData(reader, m_rootItem);
 }
 
@@ -42,7 +42,7 @@ vogleditor_QApiCallTreeModel::~vogleditor_QApiCallTreeModel()
 {
    if (m_rootItem != NULL)
    {
-      delete m_rootItem;
+      vogl_delete(m_rootItem);
       m_rootItem = NULL;
    }
 
@@ -196,7 +196,7 @@ void vogleditor_QApiCallTreeModel::setupModelData(vogl_trace_file_reader* pTrace
          // and append it to the parent
          if (pCurFrame == NULL)
          {
-            pCurFrame = new vogleditor_frameItem(total_swaps);
+            pCurFrame = vogl_new(vogleditor_frameItem, total_swaps);
             vogleditor_apiCallTreeItem* pNewFrameNode = vogl_new(vogleditor_apiCallTreeItem, pCurFrame, pCurParent);
             pCurParent->appendChild(pNewFrameNode);
             m_itemList.append(pNewFrameNode);
@@ -234,6 +234,16 @@ void vogleditor_QApiCallTreeModel::setupModelData(vogl_trace_file_reader* pTrace
 
             // reset the CurFrame so that a new frame node will be created on the next api call
             pCurFrame = NULL;
+         }
+         else if (entrypoint_id == VOGL_ENTRYPOINT_glBegin)
+         {
+             // items in the glBegin/glEnd block will be nested, including the glEnd
+             pCurParent = item;
+         }
+         else if (entrypoint_id == VOGL_ENTRYPOINT_glEnd)
+         {
+             // move the parent back one level of the hierarchy, to its own parent
+             pCurParent = pCurParent->parent();
          }
       }
 
@@ -528,7 +538,9 @@ vogleditor_apiCallTreeItem *vogleditor_QApiCallTreeModel::find_prev_drawcall(vog
         {
             gl_entrypoint_id_t entrypointId = static_cast<gl_entrypoint_id_t>(pItem->apiCallItem()->getGLPacket()->m_entrypoint_id);
             if (vogl_is_draw_entrypoint(entrypointId) ||
-                vogl_is_clear_entrypoint(entrypointId))
+                vogl_is_clear_entrypoint(entrypointId) ||
+                (entrypointId == VOGL_ENTRYPOINT_glBitmap) ||
+                (entrypointId == VOGL_ENTRYPOINT_glEnd))
             {
                 pFound = iter.peekPrevious();
                 break;
@@ -561,7 +573,9 @@ vogleditor_apiCallTreeItem *vogleditor_QApiCallTreeModel::find_next_drawcall(vog
         {
             gl_entrypoint_id_t entrypointId = static_cast<gl_entrypoint_id_t>(pItem->apiCallItem()->getGLPacket()->m_entrypoint_id);
             if (vogl_is_draw_entrypoint(entrypointId) ||
-                vogl_is_clear_entrypoint(entrypointId))
+                vogl_is_clear_entrypoint(entrypointId) ||
+                (entrypointId == VOGL_ENTRYPOINT_glBitmap) ||
+                (entrypointId == VOGL_ENTRYPOINT_glEnd))
             {
                 pFound = iter.peekNext();
                 break;
