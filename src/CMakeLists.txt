@@ -5,7 +5,7 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 option(BUILD_GL_TESTS "Build OpenGL tests" TRUE)
 option(BUILD_GL_SAMPLES "Build various OpenGL samples" TRUE)
-option(HAS_UPDATED_LIBUNWIND "Build using unw_backtrace_skip" FALSE)
+option(HAS_UPDATED_LIBUNWIND "Build using unw_backtrace_skip" TRUE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 

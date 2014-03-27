@@ -508,14 +508,16 @@ am__libunwind_x86_la_SOURCES_DIST = os-freebsd.c os-hpux.c os-linux.c \
 	mi/Gset_caching_policy.c x86/Gcreate_addr_space.c \
 	x86/Gget_save_loc.c x86/Gglobal.c x86/Ginit.c \
 	x86/Ginit_local.c x86/Ginit_remote.c x86/Gget_proc_info.c \
-	x86/Gregs.c x86/Gresume.c x86/Gstep.c
+	x86/Gregs.c x86/Gresume.c x86/Gstash_frame.c x86/Gstep.c \
+	x86/Gtrace.c
 am__objects_37 = $(am__objects_6) x86/is_fpreg.lo x86/regname.lo
 @OS_FREEBSD_FALSE@@OS_LINUX_TRUE@am__objects_38 = x86/Gos-linux.lo
 @OS_FREEBSD_TRUE@am__objects_38 = x86/Gos-freebsd.lo
 am__objects_39 = $(am__objects_37) $(am__objects_38) $(am__objects_8) \
 	x86/Gcreate_addr_space.lo x86/Gget_save_loc.lo x86/Gglobal.lo \
 	x86/Ginit.lo x86/Ginit_local.lo x86/Ginit_remote.lo \
-	x86/Gget_proc_info.lo x86/Gregs.lo x86/Gresume.lo x86/Gstep.lo
+	x86/Gget_proc_info.lo x86/Gregs.lo x86/Gresume.lo \
+	x86/Gstash_frame.lo x86/Gstep.lo x86/Gtrace.lo
 @ARCH_AARCH64_FALSE@@ARCH_ARM_FALSE@@ARCH_HPPA_FALSE@@ARCH_IA64_FALSE@@ARCH_MIPS_FALSE@@ARCH_X86_TRUE@am_libunwind_x86_la_OBJECTS = $(am__objects_39)
 libunwind_x86_la_OBJECTS = $(am_libunwind_x86_la_OBJECTS)
 libunwind_x86_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -596,7 +598,8 @@ am__libunwind_la_SOURCES_DIST = os-freebsd.c os-hpux.c os-linux.c \
 	x86/regname.c x86/Los-freebsd.c x86/Los-linux.c \
 	x86/Lcreate_addr_space.c x86/Lget_save_loc.c x86/Lglobal.c \
 	x86/Linit.c x86/Linit_local.c x86/Linit_remote.c \
-	x86/Lget_proc_info.c x86/Lregs.c x86/Lresume.c x86/Lstep.c \
+	x86/Lget_proc_info.c x86/Lregs.c x86/Lresume.c \
+	x86/Lstash_frame.c x86/Lstep.c x86/Ltrace.c \
 	x86/getcontext-freebsd.S x86/getcontext-linux.S \
 	mips/is_fpreg.c mips/regname.c mips/getcontext.S \
 	mips/Lcreate_addr_space.c mips/Lget_proc_info.c \
@@ -678,7 +681,8 @@ am__objects_53 = $(am__objects_40) $(am__objects_52) $(am__objects_47) \
 am__objects_55 = $(am__objects_37) $(am__objects_54) $(am__objects_47) \
 	x86/Lcreate_addr_space.lo x86/Lget_save_loc.lo x86/Lglobal.lo \
 	x86/Linit.lo x86/Linit_local.lo x86/Linit_remote.lo \
-	x86/Lget_proc_info.lo x86/Lregs.lo x86/Lresume.lo x86/Lstep.lo
+	x86/Lget_proc_info.lo x86/Lregs.lo x86/Lresume.lo \
+	x86/Lstash_frame.lo x86/Lstep.lo x86/Ltrace.lo
 @OS_FREEBSD_FALSE@@OS_LINUX_TRUE@am__objects_56 =  \
 @OS_FREEBSD_FALSE@@OS_LINUX_TRUE@	x86/getcontext-linux.lo
 @OS_FREEBSD_TRUE@am__objects_56 = x86/getcontext-freebsd.lo
@@ -1207,7 +1211,7 @@ libunwind_la_SOURCES_x86 = $(libunwind_la_SOURCES_x86_common)		\
 	x86/Lcreate_addr_space.c x86/Lget_save_loc.c x86/Lglobal.c	\
 	x86/Linit.c x86/Linit_local.c x86/Linit_remote.c		\
 	x86/Lget_proc_info.c x86/Lregs.c				\
-	x86/Lresume.c x86/Lstep.c
+	x86/Lresume.c x86/Lstash_frame.c x86/Lstep.c x86/Ltrace.c
 
 
 # The list of files that go into libunwind-x86:
@@ -1217,7 +1221,7 @@ libunwind_x86_la_SOURCES_x86 = $(libunwind_la_SOURCES_x86_common)	\
 	x86/Gcreate_addr_space.c x86/Gget_save_loc.c x86/Gglobal.c	\
 	x86/Ginit.c x86/Ginit_local.c x86/Ginit_remote.c		\
 	x86/Gget_proc_info.c x86/Gregs.c				\
-	x86/Gresume.c x86/Gstep.c
+	x86/Gresume.c x86/Gstash_frame.c x86/Gstep.c x86/Gtrace.c
 
 libunwind_la_SOURCES_x86_64_common = $(libunwind_la_SOURCES_common)	\
 	x86_64/is_fpreg.c x86_64/regname.c
@@ -1956,7 +1960,9 @@ x86/Gget_proc_info.lo: x86/$(am__dirstamp) \
 	x86/$(DEPDIR)/$(am__dirstamp)
 x86/Gregs.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
 x86/Gresume.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
+x86/Gstash_frame.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
 x86/Gstep.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
+x86/Gtrace.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
 libunwind-x86.la: $(libunwind_x86_la_OBJECTS) $(libunwind_x86_la_DEPENDENCIES) $(EXTRA_libunwind_x86_la_DEPENDENCIES) 
 	$(libunwind_x86_la_LINK) $(am_libunwind_x86_la_rpath) $(libunwind_x86_la_OBJECTS) $(libunwind_x86_la_LIBADD) $(LIBS)
 x86_64/is_fpreg.lo: x86_64/$(am__dirstamp) \
@@ -2141,7 +2147,9 @@ x86/Lget_proc_info.lo: x86/$(am__dirstamp) \
 	x86/$(DEPDIR)/$(am__dirstamp)
 x86/Lregs.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
 x86/Lresume.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
+x86/Lstash_frame.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
 x86/Lstep.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
+x86/Ltrace.lo: x86/$(am__dirstamp) x86/$(DEPDIR)/$(am__dirstamp)
 x86/getcontext-freebsd.lo: x86/$(am__dirstamp) \
 	x86/$(DEPDIR)/$(am__dirstamp)
 x86/getcontext-linux.lo: x86/$(am__dirstamp) \
@@ -2897,8 +2905,12 @@ mostlyclean-compile:
 	-rm -f x86/Gregs.lo
 	-rm -f x86/Gresume.$(OBJEXT)
 	-rm -f x86/Gresume.lo
+	-rm -f x86/Gstash_frame.$(OBJEXT)
+	-rm -f x86/Gstash_frame.lo
 	-rm -f x86/Gstep.$(OBJEXT)
 	-rm -f x86/Gstep.lo
+	-rm -f x86/Gtrace.$(OBJEXT)
+	-rm -f x86/Gtrace.lo
 	-rm -f x86/Lcreate_addr_space.$(OBJEXT)
 	-rm -f x86/Lcreate_addr_space.lo
 	-rm -f x86/Lget_proc_info.$(OBJEXT)
@@ -2921,8 +2933,12 @@ mostlyclean-compile:
 	-rm -f x86/Lregs.lo
 	-rm -f x86/Lresume.$(OBJEXT)
 	-rm -f x86/Lresume.lo
+	-rm -f x86/Lstash_frame.$(OBJEXT)
+	-rm -f x86/Lstash_frame.lo
 	-rm -f x86/Lstep.$(OBJEXT)
 	-rm -f x86/Lstep.lo
+	-rm -f x86/Ltrace.$(OBJEXT)
+	-rm -f x86/Ltrace.lo
 	-rm -f x86/getcontext-freebsd.$(OBJEXT)
 	-rm -f x86/getcontext-freebsd.lo
 	-rm -f x86/getcontext-linux.$(OBJEXT)
@@ -3333,7 +3349,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Gos-linux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Gregs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Gresume.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Gstash_frame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Gstep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Gtrace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Lcreate_addr_space.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Lget_proc_info.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Lget_save_loc.Plo@am__quote@
@@ -3345,7 +3363,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Los-linux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Lregs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Lresume.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Lstash_frame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Lstep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/Ltrace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/getcontext-freebsd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/getcontext-linux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@x86/$(DEPDIR)/is_fpreg.Plo@am__quote@

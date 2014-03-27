@@ -305,7 +305,7 @@ libunwind_la_SOURCES_x86 = $(libunwind_la_SOURCES_x86_common)		\
 	x86/Lcreate_addr_space.c x86/Lget_save_loc.c x86/Lglobal.c	\
 	x86/Linit.c x86/Linit_local.c x86/Linit_remote.c		\
 	x86/Lget_proc_info.c x86/Lregs.c				\
-	x86/Lresume.c x86/Lstep.c
+	x86/Lresume.c x86/Lstash_frame.c x86/Lstep.c x86/Ltrace.c
 
 # The list of files that go into libunwind-x86:
 libunwind_x86_la_SOURCES_x86 = $(libunwind_la_SOURCES_x86_common)	\
@@ -314,7 +314,7 @@ libunwind_x86_la_SOURCES_x86 = $(libunwind_la_SOURCES_x86_common)	\
 	x86/Gcreate_addr_space.c x86/Gget_save_loc.c x86/Gglobal.c	\
 	x86/Ginit.c x86/Ginit_local.c x86/Ginit_remote.c		\
 	x86/Gget_proc_info.c x86/Gregs.c				\
-	x86/Gresume.c x86/Gstep.c
+	x86/Gresume.c x86/Gstash_frame.c x86/Gstep.c x86/Gtrace.c
 
 # The list of files that go both into libunwind and libunwind-x86_64:
 noinst_HEADERS += x86_64/offsets.h					\
