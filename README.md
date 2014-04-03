@@ -1,6 +1,21 @@
 vogl
 =============
 
+## NOTE ##
+
+This, (the original Vogl source repository), is now deprecated. Within
+a couple of weeks, the source code history here will be replaced with
+the new source-code history at: https://github.com/ValveSoftware/vogl_src
+
+So, far now, please push any code changes to the "vogl_src" repository
+instead of to "vogl" to ensure the changes do not get lost in the
+transition.
+
+However, for Wiki, Issues, etc. the web-pages of the "vogl" repository
+are still correct (ans those at "vogl_src" are just empty and should
+remain that way).
+
+
 ## Warning ##
 
 This project is alpha^2 right now. If you are up for suffering through a bit of pain with early releases, please continue on - we'd love to have your help...
