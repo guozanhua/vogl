@@ -98,5 +98,8 @@ for var in "$@"; do
   build_chroot "$var"
 done
 
+echo -e "Installing libturbojpeg into system"
+(unset CHROOT_NAME; sudo apt-get install libturbojpeg)
+
 echo -e "\n${Color_On}Done...${Color_Off}"
 exit 1

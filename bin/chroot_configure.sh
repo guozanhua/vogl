@@ -158,6 +158,9 @@ if [[ -n "$DO_PACKAGES" ]]; then
     # Install time utility
     apt_get_install -y time
 
+    # Install latex2man
+    apt_get_install -y texlive-extra-utils
+
     # Workaround bug 714890 in 32-bit clang. Gcc 4.8 changed the include paths.
     # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=714890
     #   /usr/include/c++/4.6/i686-linux-gnu/bits/c++config.h
@@ -339,7 +342,7 @@ if [ ! -w "$DESTDIR/src/.libs/libunwind.a" ]; then
   # to debug:
   #   ./configure --enable-debug --enable-debug-frame --enable-shared=no --enable-static=yes
   #   export UNW_DEBUG_LEVEL=4
-  make clean
+  make clean || true
   CFLAGS="-g -fPIC" ./configure --enable-debug-frame --enable-shared=no --enable-static=yes
   make CFLAGS="-g -fPIC" LDFLAGS="-g -fPIC" -j 8
   popd
