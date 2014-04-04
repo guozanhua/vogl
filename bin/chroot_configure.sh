@@ -339,7 +339,7 @@ if [ ! -w "$DESTDIR/src/.libs/libunwind.a" ]; then
   # to debug:
   #   ./configure --enable-debug --enable-debug-frame --enable-shared=no --enable-static=yes
   #   export UNW_DEBUG_LEVEL=4
-  make clean
+  make clean || true
   CFLAGS="-g -fPIC" ./configure --enable-debug-frame --enable-shared=no --enable-static=yes
   make CFLAGS="-g -fPIC" LDFLAGS="-g -fPIC" -j 8
   popd
